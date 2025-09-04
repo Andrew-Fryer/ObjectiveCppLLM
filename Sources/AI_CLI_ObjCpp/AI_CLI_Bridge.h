@@ -32,6 +32,9 @@
 + (void)performSemanticSearchWithQuery:(NSString *)query 
                                   body:(NSString *)body 
                             completion:(void (^)(SearchResultsObjC * _Nullable results, NSError * _Nullable error))completion;
++ (void)performSemanticSearch:(NSString *)query 
+                                  body:(NSString *)body 
+                            completion:(void (^)(SearchResultsObjC * _Nullable results, NSError * _Nullable error))completion;
 
 + (NSString *)readFromStdin:(NSError **)error;
 + (NSString *)extractJSONFromText:(NSString *)text;

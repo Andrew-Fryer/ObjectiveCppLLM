@@ -76,7 +76,7 @@ int main(int argc, const char * argv[]) {
         dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
         __block BOOL success = NO;
         
-        [AI_CLIBridge performSemanticSearchWithQuery:query 
+        [AI_CLIBridge performSemanticSearch:query 
                                                 body:body 
                                           completion:^(SearchResultsObjC * _Nullable results, NSError * _Nullable error) {
             if (error) {
@@ -87,7 +87,7 @@ int main(int argc, const char * argv[]) {
             } else {
                 printError("Unknown error occurred");
             }
-            printError("dispatching signlal");
+            printError("dispatching signal");
             dispatch_semaphore_signal(semaphore);
         }];
         

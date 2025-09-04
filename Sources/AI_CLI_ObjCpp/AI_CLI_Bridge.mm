@@ -112,6 +112,36 @@
     }
 }
 
++ (void)performSemanticSearch:(NSString *)query 
+                         body:(NSString *)body 
+                   completion:(void (^)(SearchResultsObjC * _Nullable, NSError * _Nullable))completion {
+    if (@available(macOS 26.0, *)) {
+        // Try to call the Swift bridge using runtime calls
+        Class swiftBridgeClass = NSClassFromString(@"AI_CLI_Bridge.SwiftBridge");
+        if (swiftBridgeClass && [swiftBridgeClass respondsToSelector:@selector(performSemanticSearchWithQuery:body:completion:)]) {
+            // Use NSInvocation to properly call the Swift method with completion block
+            NSMethodSignature *signature = [swiftBridgeClass methodSignatureForSelector:@selector(performSemanticSearchWithQuery:body:completion:)];
+            NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:signature];
+            [invocation setTarget:swiftBridgeClass];
+            [invocation setSelector:@selector(performSemanticSearchWithQuery:body:completion:)];
+            [invocation setArgument:&query atIndex:2];
+            [invocation setArgument:&body atIndex:3];
+            [invocation setArgument:&completion atIndex:4];
+            [invocation invoke];
+            return;
+        }
+        
+        // Fallback to our Objective-C++ implementation if Swift bridge isn't available
+        NSLog(@"Falling back to naive impl because swift bridge isn't available.");
+        [self performSemanticSearchWithQuery:query body:body completion:completion];
+    } else {
+        NSError *error = [NSError errorWithDomain:@"AI_CLI_Bridge" 
+                                             code:2 
+                                         userInfo:@{NSLocalizedDescriptionKey: @"This application requires macOS 26.0 or later"}];
+        completion(nil, error);
+    }
+}
+
 + (NSString *)readFromStdin:(NSError **)error {
     std::string input;
     std::string line;
