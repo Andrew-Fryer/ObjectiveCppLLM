@@ -21,14 +21,26 @@ struct AI_CLI {
     static func main() async {
         let arguments = CommandLine.arguments
         
-        guard arguments.count >= 3 else {
-            print("Usage: AI_CLI \"<query>\" \"<body_text>\"")
-            print("Example: AI_CLI \"mentions of AI\" \"This document discusses artificial intelligence and machine learning concepts.\"")
+        guard arguments.count >= 2 else {
+            print("Usage: AI_CLI \"<query>\"")
+            print("Example: echo \"This document discusses artificial intelligence and machine learning concepts.\" | AI_CLI \"mentions of AI\"")
             return
         }
         
         let query = arguments[1]
-        let body = arguments[2]
+        
+        // Read body from stdin
+        let body: String
+        do {
+            body = try readFromStdin()
+        } catch {
+            let errorResponse = ["error": "Failed to read from stdin: \(error.localizedDescription)"]
+            if let jsonData = try? JSONSerialization.data(withJSONObject: errorResponse),
+               let jsonString = String(data: jsonData, encoding: .utf8) {
+                print(jsonString)
+            }
+            return
+        }
         
         do {
             let searchResults = try await performSemanticSearch(query: query, body: body)
@@ -104,6 +116,19 @@ Analyze this text and find all semantic matches for the query. Return ONLY the J
         } catch {
             throw NSError(domain: "AI_CLI", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to parse JSON response: \(error.localizedDescription). Raw response: \(cleanResponse)"])
         }
+    }
+    
+    static func readFromStdin() throws -> String {
+        var input = ""
+        while let line = readLine() {
+            input += line + "\n"
+        }
+        
+        guard !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw NSError(domain: "AI_CLI", code: 3, userInfo: [NSLocalizedDescriptionKey: "No input provided via stdin"])
+        }
+        
+        return input.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
     static func extractJSON(from text: String) -> String {
